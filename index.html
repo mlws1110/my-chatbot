@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f5f5f5; }
+        #chatbox { width: 90%; max-width: 600px; height: 80vh; border: 1px solid #ccc; border-radius: 10px; display: flex; flex-direction: column; background-color: #fff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        #messages { flex: 1; padding: 20px; overflow-y: auto; border-bottom: 1px solid #ccc; }
+        .message { border-radius: 15px; padding: 10px 15px; margin: 5px 0; max-width: 80%; word-wrap: break-word; }
+        .user { background-color: #d1e7dd; align-self: flex-end; }
+        .bot { background-color: #f1f1f1; align-self: flex-start; }
+        #inputBox { display: flex; padding: 10px; }
+        #userInput { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-right: 10px; }
+        #sendButton { padding: 10px 20px; border: none; border-radius: 5px; background-color: #007bff; color: white; cursor: pointer; }
+        #sendButton:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div id="chatbox">
+        <div id="messages"></div>
+        <div id="inputBox">
+            <input type="text" id="userInput" placeholder="Type a message..." onkeypress="if(event.keyCode == 13) sendMessage()"/>
+            <button id="sendButton" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+            if (!userInput.trim()) return;
+
+            const messagesDiv = document.getElementById('messages');
+
+            // Display user message
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.classList.add('message', 'user');
+            userMessageDiv.textContent = userInput;
+            messagesDiv.appendChild(userMessageDiv);
+
+            // Scroll to the bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Call server-side proxy
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: userInput
+                    })
+                });
+
+                const data = await response.json();
+                const botReply = data.reply;
+                console.log('Bot reply:', botReply);
+
+                // Display bot response
+                const botMessageDiv = document.createElement('div');
+                botMessageDiv.classList.add('message', 'bot');
+                botMessageDiv.textContent = botReply;
+                messagesDiv.appendChild(botMessageDiv);
+
+                // Scroll to the bottom
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+                // Clear user input
+                document.getElementById('userInput').value = '';
+
+            } catch (error) {
+                console.error('Error:', error);
+                const errorMessageDiv = document.createElement('div');
+                errorMessageDiv.classList.add('message', 'bot');
+                errorMessageDiv.textContent = 'Error fetching response from server';
+                messagesDiv.appendChild(errorMessageDiv);
+            }
+        }
+    </script>
+</body>
+</html>
